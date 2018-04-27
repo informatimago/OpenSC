@@ -726,7 +726,6 @@ sc_pkcs11_init_lock(CK_C_INITIALIZE_ARGS_PTR args)
 	CK_RV rv = CKR_OK;
 
 	int applock = 0;
-	int oslock = 0;
 	if (global_lock)
 		return CKR_OK;
 
@@ -745,22 +744,13 @@ sc_pkcs11_init_lock(CK_C_INITIALIZE_ARGS_PTR args)
 		   args->LockMutex   && args->UnlockMutex) {
 			applock = 1;
 	}
-	if ((args->flags & CKF_OS_LOCKING_OK)) {
-		oslock = 1;
-	}
 
 	/* Based on PKCS#11 v2.11 11.4 */
-	if (applock && oslock) {
+	if (applock) {
 		/* Shall be used in threaded environment, prefer app provided locking */
 		global_locking = args;
-	} else if (!applock && oslock) {
+	} else {
 		/* Shall be used in threaded environment, must use operating system locking */
-		global_locking = default_mutex_funcs;
-	} else if (applock && !oslock) {
-		/* Shall be used in threaded environment, must use app provided locking */
-		global_locking = args;
-	} else if (!applock && !oslock) {
-		/* Shall not be used in threaded environment, use operating system locking */
 		global_locking = default_mutex_funcs;
 	}
 
